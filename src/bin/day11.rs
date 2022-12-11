@@ -136,39 +136,7 @@ fn parse(data: &str) -> Vec<Monkey> {
     monkeys.iter().rev().cloned().collect()
 }
 
-fn simulate(rounds: usize, monkeys: &mut [Monkey]) {
-    for _ in 0..rounds {
-        for i in 0..monkeys.len() {
-            let monkey = &mut monkeys[i];
-            let mut moves = vec![];
-            for item in monkey.items.drain(..) {
-                let left: u64 = match monkey.operation.left {
-                    OpComponent::Old => item,
-                    OpComponent::Int(i) => i,
-                } as u64;
-                let right: u64 = match monkey.operation.right {
-                    OpComponent::Old => item,
-                    OpComponent::Int(i) => i,
-                } as u64;
-                let item = match monkey.operation.op {
-                    Op::Add => left + right,
-                    Op::Mult => left * right,
-                } / 3;
-                monkey.inspects += 1;
-                if item % monkey.test.div as u64 == 0 {
-                    moves.push((item, monkey.test.t));
-                } else {
-                    moves.push((item, monkey.test.f));
-                }
-            }
-            for mv in moves {
-                monkeys[mv.1 as usize].items.push(mv.0 as u32);
-            }
-        }
-    }
-}
-
-fn simulate_big(rounds: usize, monkeys: &mut [Monkey]) {
+fn simulate(rounds: usize, monkeys: &mut [Monkey], div: u64) {
     let lcd: u32 = monkeys
         .iter()
         .scan(1, |s, c| {
@@ -194,7 +162,7 @@ fn simulate_big(rounds: usize, monkeys: &mut [Monkey]) {
                 let item = match monkey.operation.op {
                     Op::Add => left + right,
                     Op::Mult => left * right,
-                };
+                } / div;
                 monkey.inspects += 1;
                 if item % monkey.test.div as u64 == 0 {
                     moves.push((item % lcd as u64, monkey.test.t));
@@ -211,7 +179,7 @@ fn simulate_big(rounds: usize, monkeys: &mut [Monkey]) {
 
 fn part_one(data: &str) -> u32 {
     let mut monkeys = parse(data);
-    simulate(20, &mut monkeys);
+    simulate(20, &mut monkeys, 3);
 
     let mut results = vec![];
 
@@ -226,7 +194,7 @@ fn part_one(data: &str) -> u32 {
 
 fn part_two(data: &str) -> u64 {
     let mut monkeys = parse(data);
-    simulate_big(10000, &mut monkeys);
+    simulate(10000, &mut monkeys, 1);
 
     let mut results = vec![];
 
@@ -303,7 +271,7 @@ Monkey 3:
     #[test]
     fn test_simulate() {
         let mut monkeys = parse(DATA);
-        simulate(20, &mut monkeys);
+        simulate(20, &mut monkeys, 3);
 
         let expected = [101, 95, 7, 105];
 
@@ -320,7 +288,7 @@ Monkey 3:
     #[test]
     fn test_simulate_big() {
         let mut monkeys = parse(DATA);
-        simulate_big(1, &mut monkeys);
+        simulate(1, &mut monkeys, 1);
 
         let expected = [2, 4, 3, 6];
 
@@ -329,7 +297,7 @@ Monkey 3:
         }
 
         let mut monkeys = parse(DATA);
-        simulate_big(20, &mut monkeys);
+        simulate(20, &mut monkeys, 1);
 
         let expected = [99, 97, 8, 103];
 
